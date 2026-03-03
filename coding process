@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #080b12;
+  --surface: #0d1117;
+  --card: #111827;
+  --card2: #131c2e;
+  --border: #1e2d45;
+  --border2: #243447;
+  --text: #e2eaf6;
+  --muted: #5a7a9a;
+  --faint: #1a2a3f;
+  --blue: #3b82f6;
+  --blue-glow: rgba(59,130,246,0.18);
+  --cyan: #06b6d4;
+  --cyan-glow: rgba(6,182,212,0.15);
+  --green: #10b981;
+  --green-glow: rgba(16,185,129,0.15);
+  --amber: #f59e0b;
+  --amber-glow: rgba(245,158,11,0.15);
+  --red: #ef4444;
+  --red-glow: rgba(239,68,68,0.15);
+  --violet: #8b5cf6;
+  --violet-glow: rgba(139,92,246,0.15);
+  --sidebar-w: 240px;
+}
+
+html, body { height: 100%; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  overflow: hidden;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  min-width: var(--sidebar-w);
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: -80px; left: -80px;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.sidebar-logo {
+  padding: 1.5rem 1.4rem 1.2rem;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.7rem;
+}
+.logo-mark {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--blue), var(--cyan));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 800; color: white;
+  letter-spacing: -1px;
+  box-shadow: 0 0 16px rgba(59,130,246,0.4);
+}
+.logo-text {
+  font-size: 1.1rem; font-weight: 800; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--text);
+}
+.logo-text span { color: var(--blue); }
+
+.sidebar-section-label {
+  font-size: 0.6rem; font-weight: 600; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--muted);
+  padding: 1.2rem 1.4rem 0.5rem;
+}
+
+.sidebar-nav { flex: 1; overflow-y: auto; padding-bottom: 1rem; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.65rem 1.4rem;
+  font-size: 0.85rem; font-weight: 500;
+  color: var(--muted); cursor: pointer;
+  transition: all 0.2s; border-left: 2px solid transparent;
+  position: relative; user-select: none;
+}
+.nav-item:hover { color: var(--text); background: var(--faint); }
+.nav-item.active {
+  color: var(--blue); background: var(--blue-glow);
+  border-left-color: var(--blue);
+}
+.nav-icon { font-size: 1rem; width: 18px; text-align: center; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--blue); color: white;
+  font-size: 0.6rem; font-weight: 700;
+  padding: 0.15rem 0.45rem; border-radius: 100px;
+  font-family: 'IBM Plex Mono', monospace;
+}
+.nav-badge.red { background: var(--red); }
+.nav-badge.green { background: var(--green); }
+
+.sidebar-user {
+  padding: 1rem 1.4rem;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0.8rem;
+  cursor: pointer; transition: background 0.2s;
+}
+.sidebar-user:hover { background: var(--faint); }
+.user-avatar {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; font-weight: 700; color: white; flex-shrink: 0;
+}
+.user-name { font-size: 0.82rem; font-weight: 600; }
+.user-role { font-size: 0.68rem; color: var(--muted); }
+.user-chevron { margin-left: auto; color: var(--muted); font-size: 0.7rem; }
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: 58px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem;
+  flex-shrink: 0;
+}
+
+.topbar-left { display: flex; align-items: center; gap: 1.5rem; }
+.page-title { font-size: 1rem; font-weight: 700; }
+.breadcrumb { font-size: 0.72rem; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; }
+.breadcrumb span { color: var(--blue); }
+
+.topbar-right { display: flex; align-items: center; gap: 0.8rem; }
+
+.search-box {
+  display: flex; align-items: center; gap: 0.6rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 0.45rem 1rem;
+  font-size: 0.8rem; color: var(--muted);
+  cursor: text; transition: border-color 0.2s;
+  min-width: 200px;
+}
+.search-box:hover { border-color: var(--border2); }
+
+.icon-btn {
+  width: 36px; height: 36px; border-radius: 8px;
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; transition: all 0.2s; position: relative;
+}
+.icon-btn:hover { border-color: var(--border2); color: var(--text); }
+.notif-dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 7px; height: 7px; background: var(--red);
+  border-radius: 50%; border: 1.5px solid var(--surface);
+}
+
+.live-badge {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
+  border-radius: 6px; padding: 0.35rem 0.8rem;
+  font-size: 0.7rem; font-weight: 600; color: var(--green);
+  letter-spacing: 0.06em;
+}
+.live-dot {
+  width: 6px; height: 6px; background: var(--green);
+  border-radius: 50%; animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* ── CONTENT ── */
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.8rem 2rem;
+  display: flex; flex-direction: column; gap: 1.5rem;
+}
+
+/* ── STATS CARDS ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.4rem 1.5rem;
+  position: relative; overflow: hidden;
+  cursor: default;
+  transition: border-color 0.25s, transform 0.25s;
+  animation: fadeUp 0.5s ease both;
+}
+.stat-card:hover { transform: translateY(-3px); }
+.stat-card:nth-child(1) { animation-delay: 0.05s; }
+.stat-card:nth-child(2) { animation-delay: 0.1s; }
+.stat-card:nth-child(3) { animation-delay: 0.15s; }
+.stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+.stat-card.blue { border-color: rgba(59,130,246,0.25); }
+.stat-card.blue:hover { border-color: rgba(59,130,246,0.5); }
+.stat-card.cyan { border-color: rgba(6,182,212,0.25); }
+.stat-card.cyan:hover { border-color: rgba(6,182,212,0.5); }
+.stat-card.green { border-color: rgba(16,185,129,0.25); }
+.stat-card.green:hover { border-color: rgba(16,185,129,0.5); }
+.stat-card.amber { border-color: rgba(245,158,11,0.25); }
+.stat-card.amber:hover { border-color: rgba(245,158,11,0.5); }
+
+.stat-glow {
+  position: absolute; top: -30px; right: -30px;
+  width: 100px; height: 100px; border-radius: 50%;
+  pointer-events: none;
+}
+.blue .stat-glow { background: radial-gradient(circle, var(--blue-glow), transparent 70%); }
+.cyan .stat-glow { background: radial-gradient(circle, var(--cyan-glow), transparent 70%); }
+.green .stat-glow { background: radial-gradient(circle, var(--green-glow), transparent 70%); }
+.amber .stat-glow { background: radial-gradient(circle, var(--amber-glow), transparent 70%); }
+
+.stat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.stat-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.stat-icon-wrap {
+  width: 34px; height: 34px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+}
+.blue .stat-icon-wrap { background: var(--blue-glow); }
+.cyan .stat-icon-wrap { background: var(--cyan-glow); }
+.green .stat-icon-wrap { background: var(--green-glow); }
+.amber .stat-icon-wrap { background: var(--amber-glow); }
+
+.stat-value {
+  font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 0.5rem;
+  font-variant-numeric: tabular-nums;
+}
+.blue .stat-value { color: var(--blue); }
+.cyan .stat-value { color: var(--cyan); }
+.green .stat-value { color: var(--green); }
+.amber .stat-value { color: var(--amber); }
+
+.stat-footer { display: flex; align-items: center; gap: 0.5rem; }
+.stat-change {
+  font-size: 0.72rem; font-weight: 600; font-family: 'IBM Plex Mono', monospace;
+  padding: 0.18rem 0.5rem; border-radius: 4px;
+}
+.stat-change.up { background: rgba(16,185,129,0.12); color: var(--green); }
+.stat-change.down { background: rgba(239,68,68,0.12); color: var(--red); }
+.stat-period { font-size: 0.7rem; color: var(--muted); }
+
+/* ── CHARTS ROW ── */
+.charts-row { display: grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+
+.chart-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.4rem;
+  animation: fadeUp 0.5s 0.25s ease both;
+}
+
+.chart-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+.chart-title { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.2rem; }
+.chart-sub { font-size: 0.72rem; color: var(--muted); }
+
+.chart-actions { display: flex; gap: 0.4rem; }
+.chart-btn {
+  background: var(--faint); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 6px; padding: 0.3rem 0.75rem;
+  font-size: 0.7rem; font-family: 'Syne', sans-serif; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+}
+.chart-btn:hover { color: var(--text); border-color: var(--border2); }
+.chart-btn.active { background: var(--blue-glow); color: var(--blue); border-color: rgba(59,130,246,0.35); }
+
+.chart-wrap { position: relative; height: 220px; }
+
+/* donut chart */
+.donut-wrap {
+  position: relative; height: 180px;
+  display: flex; align-items: center; justify-content: center;
+}
+.donut-center {
+  position: absolute; text-align: center;
+}
+.donut-center-num { font-size: 1.6rem; font-weight: 800; color: var(--text); line-height: 1; }
+.donut-center-label { font-size: 0.65rem; color: var(--muted); margin-top: 0.2rem; }
+
+.donut-legend { display: flex; flex-direction: column; gap: 0.65rem; margin-top: 1rem; }
+.legend-item { display: flex; align-items: center; justify-content: space-between; font-size: 0.78rem; }
+.legend-left { display: flex; align-items: center; gap: 0.6rem; color: var(--muted); }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+.legend-val { font-weight: 600; color: var(--text); font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; }
+
+/* ── BOTTOM ROW ── */
+.bottom-row { display: grid; grid-template-columns: 1fr 320px; gap: 1rem; }
+
+/* ── USER TABLE ── */
+.table-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  animation: fadeUp 0.5s 0.3s ease both;
+}
+
+.table-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.table-title { font-size: 0.9rem; font-weight: 700; }
+.table-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+.filter-select {
+  background: var(--faint); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 6px; padding: 0.35rem 0.7rem;
+  font-size: 0.72rem; font-family: 'Syne', sans-serif;
+  cursor: pointer; outline: none;
+}
+
+.add-btn {
+  background: var(--blue); color: white;
+  border: none; border-radius: 6px; padding: 0.4rem 1rem;
+  font-size: 0.75rem; font-family: 'Syne', sans-serif; font-weight: 600;
+  cursor: pointer; transition: background 0.2s;
+  display: flex; align-items: center; gap: 0.35rem;
+}
+.add-btn:hover { background: #2563eb; }
+
+table {
+  width: 100%; border-collapse: collapse;
+}
+thead tr { border-bottom: 1px solid var(--border); }
+thead th {
+  padding: 0.7rem 1.5rem;
+  font-size: 0.65rem; font-weight: 600; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted);
+  text-align: left; white-space: nowrap;
+}
+tbody tr {
+  border-bottom: 1px solid var(--faint);
+  transition: background 0.15s; cursor: default;
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(59,130,246,0.04); }
+td {
+  padding: 0.9rem 1.5rem;
+  font-size: 0.82rem; white-space: nowrap;
+}
+
+.td-user { display: flex; align-items: center; gap: 0.75rem; }
+.td-avatar {
+  width: 32px; height: 32px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; color: white; flex-shrink: 0;
+}
+.td-name { font-weight: 600; font-size: 0.83rem; }
+.td-email { font-size: 0.7rem; color: var(--muted); }
+
+.status-pill {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.67rem; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; padding: 0.22rem 0.65rem;
+  border-radius: 100px;
+}
+.status-pill::before { content: ''; width: 5px; height: 5px; border-radius: 50%; }
+.pill-active { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.2); }
+.pill-active::before { background: var(--green); }
+.pill-idle { background: rgba(245,158,11,0.12); color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+.pill-idle::before { background: var(--amber); }
+.pill-inactive { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.18); }
+.pill-inactive::before { background: var(--red); }
+
+.role-tag {
+  font-size: 0.67rem; font-weight: 600; letter-spacing: 0.06em;
+  text-transform: uppercase; padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+}
+.role-admin { background: var(--violet-glow); color: var(--violet); border: 1px solid rgba(139,92,246,0.2); }
+.role-user { background: var(--blue-glow); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); }
+.role-editor { background: var(--cyan-glow); color: var(--cyan); border: 1px solid rgba(6,182,212,0.2); }
+.role-viewer { background: var(--faint); color: var(--muted); border: 1px solid var(--border); }
+
+.td-mono { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--muted); }
+
+.row-actions { display: flex; gap: 0.4rem; opacity: 0; transition: opacity 0.2s; }
+tbody tr:hover .row-actions { opacity: 1; }
+.row-btn {
+  background: var(--faint); border: 1px solid var(--border);
+  color: var(--muted); border-radius: 5px; padding: 0.25rem 0.5rem;
+  font-size: 0.7rem; cursor: pointer; transition: all 0.15s;
+  font-family: 'Syne', sans-serif;
+}
+.row-btn:hover { background: var(--border); color: var(--text); }
+.row-btn.del:hover { background: rgba(239,68,68,0.1); color: var(--red); border-color: rgba(239,68,68,0.2); }
+
+/* ── ACTIVITY FEED ── */
+.activity-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden;
+  animation: fadeUp 0.5s 0.35s ease both;
+}
+
+.activity-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.2rem 1.4rem; border-bottom: 1px solid var(--border);
+}
+.activity-title { font-size: 0.9rem; font-weight: 700; }
+.see-all { font-size: 0.72rem; color: var(--blue); cursor: pointer; transition: opacity 0.2s; }
+.see-all:hover { opacity: 0.7; }
+
+.activity-list { padding: 0.4rem 0; max-height: 380px; overflow-y: auto; }
+.activity-item {
+  display: flex; align-items: flex-start; gap: 0.9rem;
+  padding: 0.85rem 1.4rem; transition: background 0.15s;
+}
+.activity-item:hover { background: var(--faint); }
+
+.activity-icon {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 0.9rem;
+  margin-top: 1px;
+}
+.ai-blue { background: var(--blue-glow); }
+.ai-green { background: var(--green-glow); }
+.ai-amber { background: var(--amber-glow); }
+.ai-red { background: var(--red-glow); }
+.ai-violet { background: var(--violet-glow); }
+.ai-cyan { background: var(--cyan-glow); }
+
+.activity-body { flex: 1; min-width: 0; }
+.activity-text { font-size: 0.8rem; font-weight: 500; line-height: 1.4; }
+.activity-text strong { color: var(--text); }
+.activity-text span { color: var(--muted); }
+.activity-time { font-size: 0.67rem; color: var(--muted); margin-top: 0.2rem; font-family: 'IBM Plex Mono', monospace; }
+
+/* ── MINI SPARKLINE ── */
+.sparkline-row { display: flex; align-items: flex-end; gap: 2px; height: 24px; }
+.spark-bar {
+  flex: 1; background: var(--border); border-radius: 2px;
+  transition: background 0.2s;
+}
+.spark-bar.hi { background: var(--blue); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1200px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .charts-row { grid-template-columns: 1fr; }
+  .bottom-row { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+  .sidebar { display: none; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">NX</div>
+    <div class="logo-text">NEX<span>US</span></div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="sidebar-section-label">Overview</div>
+    <div class="nav-item active" onclick="setActive(this)">
+      <span class="nav-icon">⬛</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="setActive(this)">
+      <span class="nav-icon">📊</span> Analytics
+      <span class="nav-badge">New</span>
+    </div>
+    <div class="nav-item" onclick="setActive(this)">
+      <span class="nav-icon">📈</span> Reports
+    </div>
+
+    <div class="sidebar-section-label">Management</div>
+    <div class="nav-item" onclick="setActive(this)">
+      <span class="nav-icon">👥</span> Users
+      <span class="nav-badge">24</span>
+    </div>
+    <div class="nav-item" onclick="setActive(this)">
+      <span class="nav-icon">📦</span> Products
+    </div>
+    <div class="nav-item" onclick="setActive(this)">
+      <span class="nav-icon">🛒</span> Orders
+      <span class="nav-badge red">7</span>
+    </div>
+    <div class="nav-item" onclick="setActive(this)">
+      <span class="nav-icon">💳</span> Billing
+    </div>
+
+    <div class="sidebar-section-label">System</div>
+    <div class="nav-item" onclick="setActive(this)">
+      <span class="nav-icon">🔔</span> Notifications
+      <span class="nav-badge red">3</span>
+    </div>
+    <div class="nav-item" onclick="setActive(this)">
+      <span class="nav-icon">⚙️</span> Settings
+    </div>
+    <div class="nav-item" onclick="setActive(this)">
+      <span class="nav-icon">🔐</span> Security
+    </div>
+    <div class="nav-item" onclick="setActive(this)">
+      <span class="nav-icon">📝</span> Audit Log
+    </div>
+  </nav>
+
+  <div class="sidebar-user">
+    <div class="user-avatar">AK</div>
+    <div>
+      <div class="user-name">Alex Kim</div>
+      <div class="user-role">Super Admin</div>
+    </div>
+    <div class="user-chevron">⌃</div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="breadcrumb">Home / <span>Overview</span></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="live-badge"><div class="live-dot"></div>Live</div>
+      <div class="search-box">🔍 &nbsp;Search anything…</div>
+      <button class="icon-btn">🔔<div class="notif-dot"></div></button>
+      <button class="icon-btn">⚙️</button>
+      <div class="user-avatar" style="width:34px;height:34px;border-radius:8px;font-size:0.75rem;cursor:pointer">AK</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- STATS CARDS -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-glow"></div>
+        <div class="stat-header">
+          <span class="stat-label">Total Revenue</span>
+          <div class="stat-icon-wrap">💰</div>
+        </div>
+        <div class="stat-value" id="stat-rev">$0</div>
+        <div class="stat-footer">
+          <span class="stat-change up" id="sc1">↑ 0%</span>
+          <span class="stat-period">vs last month</span>
+        </div>
+      </div>
+      <div class="stat-card cyan">
+        <div class="stat-glow"></div>
+        <div class="stat-header">
+          <span class="stat-label">Active Users</span>
+          <div class="stat-icon-wrap">👤</div>
+        </div>
+        <div class="stat-value" id="stat-users">0</div>
+        <div class="stat-footer">
+          <span class="stat-change up" id="sc2">↑ 0%</span>
+          <span class="stat-period">vs last month</span>
+        </div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-glow"></div>
+        <div class="stat-header">
+          <span class="stat-label">Conversion Rate</span>
+          <div class="stat-icon-wrap">🎯</div>
+        </div>
+        <div class="stat-value" id="stat-conv">0%</div>
+        <div class="stat-footer">
+          <span class="stat-change up" id="sc3">↑ 0%</span>
+          <span class="stat-period">vs last month</span>
+        </div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-glow"></div>
+        <div class="stat-header">
+          <span class="stat-label">Pending Orders</span>
+          <div class="stat-icon-wrap">📦</div>
+        </div>
+        <div class="stat-value" id="stat-orders">0</div>
+        <div class="stat-footer">
+          <span class="stat-change down" id="sc4">↓ 0%</span>
+          <span class="stat-period">needs attention</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS ROW -->
+    <div class="charts-row">
+      <!-- Line Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Revenue Overview</div>
+            <div class="chart-sub">Monthly performance · 2025–2026</div>
+          </div>
+          <div class="chart-actions">
+            <button class="chart-btn active" onclick="setChartPeriod('6m', this)">6M</button>
+            <button class="chart-btn" onclick="setChartPeriod('1y', this)">1Y</button>
+            <button class="chart-btn" onclick="setChartPeriod('all', this)">All</button>
+          </div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Donut Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <div class="chart-title">Traffic Sources</div>
+            <div class="chart-sub">Last 30 days</div>
+          </div>
+        </div>
+        <div class="donut-wrap">
+          <canvas id="donutChart" width="180" height="180"></canvas>
+          <div class="donut-center">
+            <div class="donut-center-num">94.2k</div>
+            <div class="donut-center-label">Total Visits</div>
+          </div>
+        </div>
+        <div class="donut-legend">
+          <div class="legend-item">
+            <div class="legend-left"><div class="legend-dot" style="background:#3b82f6"></div>Organic Search</div>
+            <div class="legend-val">42.8k</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-left"><div class="legend-dot" style="background:#06b6d4"></div>Direct</div>
+            <div class="legend-val">24.1k</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-left"><div class="legend-dot" style="background:#8b5cf6"></div>Social Media</div>
+            <div class="legend-val">18.6k</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-left"><div class="legend-dot" style="background:#f59e0b"></div>Referral</div>
+            <div class="legend-val">8.7k</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div class="bottom-row">
+
+      <!-- USER TABLE -->
+      <div class="table-card">
+        <div class="table-header">
+          <div class="table-title">Team Members</div>
+          <div class="table-actions">
+            <select class="filter-select" onchange="filterTable(this.value)">
+              <option value="all">All Roles</option>
+              <option value="admin">Admin</option>
+              <option value="editor">Editor</option>
+              <option value="user">User</option>
+            </select>
+            <button class="add-btn" onclick="addUser()">+ Add User</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Last Active</th>
+                <th>Sessions</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="user-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ACTIVITY FEED -->
+      <div class="activity-card">
+        <div class="activity-header">
+          <div class="activity-title">Activity Feed</div>
+          <div class="see-all">See all →</div>
+        </div>
+        <div class="activity-list" id="activity-list"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── ANIMATE STATS ──
+function animateCount(el, target, prefix='', suffix='', duration=1200) {
+  let start = 0, startTime = null;
+  function step(ts) {
+    if (!startTime) startTime = ts;
+    const progress = Math.min((ts - startTime) / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const val = Math.floor(ease * target);
+    el.textContent = prefix + val.toLocaleString() + suffix;
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = prefix + target.toLocaleString() + suffix;
+  }
+  requestAnimationFrame(step);
+}
+
+setTimeout(() => {
+  animateCount(document.getElementById('stat-rev'), 284750, '$');
+  animateCount(document.getElementById('stat-users'), 12847);
+  document.getElementById('sc1').textContent = '↑ 18.4%';
+  document.getElementById('sc2').textContent = '↑ 6.2%';
+  // conv & orders
+  let convEl = document.getElementById('stat-conv');
+  let t = 0;
+  const ci = setInterval(() => {
+    t += 0.1;
+    if (t >= 4.7) { convEl.textContent = '4.7%'; clearInterval(ci); }
+    else convEl.textContent = t.toFixed(1) + '%';
+  }, 30);
+  document.getElementById('sc3').textContent = '↑ 0.8%';
+  animateCount(document.getElementById('stat-orders'), 47);
+  document.getElementById('sc4').textContent = '↓ 3.1%';
+}, 200);
+
+// ── REVENUE CHART ──
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+
+const datasets6m = {
+  labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
+  revenue: [38000, 52000, 48000, 71000, 63000, 84000],
+  expenses: [24000, 31000, 28000, 38000, 34000, 42000],
+};
+const datasets1y = {
+  labels: ['Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb'],
+  revenue: [29000,33000,41000,38000,45000,52000,38000,52000,48000,71000,63000,84000],
+  expenses: [18000,20000,25000,22000,27000,30000,24000,31000,28000,38000,34000,42000],
+};
+
+function makeGradient(ctx, color) {
+  const g = ctx.createLinearGradient(0, 0, 0, 220);
+  g.addColorStop(0, color.replace('1)', '0.25)'));
+  g.addColorStop(1, color.replace('1)', '0.01)'));
+  return g;
+}
+
+let revenueChart = new Chart(revenueCtx, {
+  type: 'line',
+  data: {
+    labels: datasets6m.labels,
+    datasets: [{
+      label: 'Revenue',
+      data: datasets6m.revenue,
+      borderColor: '#3b82f6',
+      backgroundColor: makeGradient(revenueCtx, 'rgba(59,130,246,1)'),
+      borderWidth: 2.5, tension: 0.4, fill: true,
+      pointBackgroundColor: '#3b82f6', pointRadius: 4, pointHoverRadius: 6,
+    },{
+      label: 'Expenses',
+      data: datasets6m.expenses,
+      borderColor: '#8b5cf6',
+      backgroundColor: makeGradient(revenueCtx, 'rgba(139,92,246,1)'),
+      borderWidth: 2, tension: 0.4, fill: true,
+      pointBackgroundColor: '#8b5cf6', pointRadius: 3, pointHoverRadius: 5,
+      borderDash: [5,4],
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: {
+        labels: { color: '#5a7a9a', font: { family: 'Syne', size: 11 }, boxWidth: 12, boxHeight: 12, borderRadius: 3, usePointStyle: false }
+      },
+      tooltip: {
+        backgroundColor: '#111827', borderColor: '#1e2d45', borderWidth: 1,
+        titleColor: '#e2eaf6', bodyColor: '#5a7a9a',
+        titleFont: { family: 'Syne', weight: '700' },
+        bodyFont: { family: 'IBM Plex Mono' },
+        callbacks: { label: ctx => `  ${ctx.dataset.label}: $${ctx.raw.toLocaleString()}` }
+      }
+    },
+    scales: {
+      x: { grid: { color: 'rgba(30,45,69,0.5)' }, ticks: { color: '#5a7a9a', font: { family: 'Syne', size: 11 } } },
+      y: { grid: { color: 'rgba(30,45,69,0.5)' }, ticks: { color: '#5a7a9a', font: { family: 'IBM Plex Mono', size: 10 }, callback: v => '$' + (v/1000) + 'k' }, border: { display: false } }
+    }
+  }
+});
+
+function setChartPeriod(period, btn) {
+  document.querySelectorAll('.chart-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const d = period === '1y' || period === 'all' ? datasets1y : datasets6m;
+  revenueChart.data.labels = d.labels;
+  revenueChart.data.datasets[0].data = d.revenue;
+  revenueChart.data.datasets[1].data = d.expenses;
+  revenueChart.update('active');
+}
+
+// ── DONUT CHART ──
+new Chart(document.getElementById('donutChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Organic', 'Direct', 'Social', 'Referral'],
+    datasets: [{
+      data: [42800, 24100, 18600, 8700],
+      backgroundColor: ['#3b82f6','#06b6d4','#8b5cf6','#f59e0b'],
+      borderWidth: 0, hoverBorderWidth: 2, hoverBorderColor: '#1e2d45',
+    }]
+  },
+  options: {
+    responsive: false, cutout: '72%',
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#111827', borderColor: '#1e2d45', borderWidth: 1,
+        titleColor: '#e2eaf6', bodyColor: '#5a7a9a',
+        callbacks: { label: ctx => `  ${ctx.label}: ${(ctx.raw/1000).toFixed(1)}k visits` }
+      }
+    }
+  }
+});
+
+// ── USER TABLE ──
+const users = [
+  { name:'Alex Kim', email:'alex@nexus.io', role:'admin', status:'active', joined:'Jan 12, 2024', lastActive:'2 min ago', sessions:284, avatar:'AK', color:'#3b82f6' },
+  { name:'Sarah Chen', email:'s.chen@nexus.io', role:'editor', status:'active', joined:'Mar 5, 2024', lastActive:'14 min ago', sessions:157, avatar:'SC', color:'#06b6d4' },
+  { name:'Marcus Webb', email:'m.webb@nexus.io', role:'user', status:'idle', joined:'Apr 22, 2024', lastActive:'2 hrs ago', sessions:89, avatar:'MW', color:'#8b5cf6' },
+  { name:'Priya Nair', email:'p.nair@nexus.io', role:'editor', status:'active', joined:'Jun 1, 2024', lastActive:'Just now', sessions:203, avatar:'PN', color:'#10b981' },
+  { name:'Jordan Lee', email:'j.lee@nexus.io', role:'user', status:'inactive', joined:'Aug 9, 2024', lastActive:'3 days ago', sessions:22, avatar:'JL', color:'#f59e0b' },
+  { name:'Olivia Stone', email:'o.stone@nexus.io', role:'admin', status:'active', joined:'Sep 18, 2024', lastActive:'1 min ago', sessions:316, avatar:'OS', color:'#ef4444' },
+  { name:'Dev Patel', email:'d.patel@nexus.io', role:'user', status:'idle', joined:'Nov 2, 2024', lastActive:'45 min ago', sessions:61, avatar:'DP', color:'#f59e0b' },
+];
+
+function renderTable(filter = 'all') {
+  const tbody = document.getElementById('user-tbody');
+  const filtered = filter === 'all' ? users : users.filter(u => u.role === filter);
+  tbody.innerHTML = filtered.map(u => `
+    <tr>
+      <td><div class="td-user">
+        <div class="td-avatar" style="background:${u.color}">${u.avatar}</div>
+        <div><div class="td-name">${u.name}</div><div class="td-email">${u.email}</div></div>
+      </div></td>
+      <td><span class="role-tag role-${u.role}">${u.role}</span></td>
+      <td><span class="status-pill pill-${u.status}">${u.status}</span></td>
+      <td class="td-mono">${u.joined}</td>
+      <td class="td-mono">${u.lastActive}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:0.6rem">
+          <span class="td-mono">${u.sessions}</span>
+          <div class="sparkline-row">${[...Array(7)].map((_,i)=>`<div class="spark-bar${i===6?' hi':''}" style="height:${Math.floor(Math.random()*20+4)}px"></div>`).join('')}</div>
+        </div>
+      </td>
+      <td><div class="row-actions">
+        <button class="row-btn">Edit</button>
+        <button class="row-btn del">✕</button>
+      </div></td>
+    </tr>`).join('');
+}
+
+function filterTable(val) { renderTable(val); }
+
+function addUser() {
+  const names = ['Chris Park','Emma Walsh','Noah Diaz','Mia Torres'];
+  const n = names[Math.floor(Math.random()*names.length)];
+  const initials = n.split(' ').map(w=>w[0]).join('');
+  const colors = ['#3b82f6','#10b981','#8b5cf6','#06b6d4','#f59e0b'];
+  users.unshift({ name:n, email:`${initials.toLowerCase()}@nexus.io`, role:'user', status:'active', joined:'Today', lastActive:'Just now', sessions:1, avatar:initials, color:colors[Math.floor(Math.random()*colors.length)] });
+  renderTable();
+}
+
+renderTable();
+
+// ── ACTIVITY FEED ──
+const activities = [
+  { icon:'👤', cls:'ai-blue', text:'<strong>Sarah Chen</strong> <span>updated her profile settings</span>', time:'2 min ago' },
+  { icon:'💳', cls:'ai-green', text:'<strong>New subscription</strong> <span>from Enterprise plan · $2,400/mo</span>', time:'8 min ago' },
+  { icon:'⚠️', cls:'ai-amber', text:'<strong>High CPU alert</strong> <span>on server cluster us-east-2</span>', time:'15 min ago' },
+  { icon:'🛒', cls:'ai-violet', text:'<strong>Order #4821</strong> <span>marked as shipped by Jordan Lee</span>', time:'22 min ago' },
+  { icon:'🔐', cls:'ai-red', text:'<strong>Failed login attempt</strong> <span>from IP 192.168.0.104</span>', time:'31 min ago' },
+  { icon:'📦', cls:'ai-cyan', text:'<strong>Product "NX Pro"</strong> <span>updated — version 3.2.1 deployed</span>', time:'1 hr ago' },
+  { icon:'👥', cls:'ai-blue', text:'<strong>Dev Patel</strong> <span>was added to the Analytics team</span>', time:'2 hrs ago' },
+  { icon:'📊', cls:'ai-green', text:'<strong>Monthly report</strong> <span>generated and emailed to 4 admins</span>', time:'3 hrs ago' },
+  { icon:'🔔', cls:'ai-amber', text:'<strong>Scheduled maintenance</strong> <span>completed — 0 downtime recorded</span>', time:'5 hrs ago' },
+];
+
+document.getElementById('activity-list').innerHTML = activities.map(a => `
+  <div class="activity-item">
+    <div class="activity-icon ${a.cls}">${a.icon}</div>
+    <div class="activity-body">
+      <div class="activity-text">${a.text}</div>
+      <div class="activity-time">${a.time}</div>
+    </div>
+  </div>`).join('');
+
+// ── SIDEBAR ACTIVE ──
+function setActive(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
